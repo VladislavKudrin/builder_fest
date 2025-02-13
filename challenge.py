@@ -1,5 +1,6 @@
 import os
 
+import bech32
 from blockfrost import ApiUrls
 from dotenv import load_dotenv
 from pycardano import (
@@ -21,7 +22,7 @@ BLOCKFROST_PROJECT_ID = os.getenv("BLOCKFROST_PROJECT_ID")
 FROM_ADDRESS = os.getenv("FROM_ADDRESS")
 TO_ADDRESS = "addr1zyzpenlg0vywj7zdh9dzdeggaer94zvckfncv9c3886c36yafhxhu32dys6pvn6wlw8dav6cmp4pmtv7cc3yel9uu0nqhcjd29"
 SEND_AMOUNT = "150000000"
-DREP_VHASH = os.getenv("DREP_VHASH")
+DREP_ID = os.getenv("DREP_ID")
 
 network = Network.MAINNET
 context = BlockFrostChainContext(BLOCKFROST_PROJECT_ID, base_url=ApiUrls.mainnet.value)
@@ -29,9 +30,13 @@ full_address = Address.from_primitive(FROM_ADDRESS)
 stake_address = Address(staking_part=full_address.staking_part, network=Network.MAINNET)
 
 stake_creds = StakeCredential(stake_address.staking_part)
+
+prefix, data = bech32.bech32_decode(DREP_ID)
+decoded_bytes = bech32.convertbits(data, 5, 8, False)
+decoded_hex = bytes(decoded_bytes).hex()
 drep = DRep(
     DRepKind(0),
-    VerificationKeyHash(bytes.fromhex(DREP_VHASH)),
+    VerificationKeyHash(bytes.fromhex(decoded_hex[2:])),
 )
 
 vote_delegation_certificate = VoteDelegation(stake_creds, drep)
